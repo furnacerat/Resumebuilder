@@ -1,64 +1,74 @@
-import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
+    <div className="min-h-dvh bg-[radial-gradient(1200px_500px_at_20%_0%,#dbeafe_0%,transparent_55%),radial-gradient(900px_420px_at_90%_10%,#ffe4e6_0%,transparent_50%),linear-gradient(#fbfbfa,#fbfbfa)]">
+      <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12 sm:py-16">
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-white">
+              <span className="text-sm font-semibold tracking-tight">RG</span>
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Resume Generator</div>
+              <div className="text-xs text-slate-600">Local-only. PDF export.</div>
+            </div>
+          </div>
+          <nav className="flex items-center gap-2 text-sm">
+            <Link className="rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-900/5" href="/library">
+              Library
+            </Link>
+            <Link className="rounded-lg px-3 py-2 text-slate-700 hover:bg-slate-900/5" href="/templates">
               Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+            </Link>
+          </nav>
+        </header>
+
+        <section className="grid gap-8 rounded-3xl border border-slate-900/10 bg-white/70 p-8 shadow-[0_20px_60px_-30px_rgba(2,6,23,0.35)] backdrop-blur sm:p-10">
+          <div className="max-w-2xl">
+            <h1 className="text-balance text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              Build a professional resume in minutes.
+            </h1>
+            <p className="mt-4 text-pretty text-base leading-7 text-slate-700 sm:text-lg">
+              Answer a simple set of questions, pick a clean template, and download a polished PDF. Everything stays on your
+              device.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+              href="/builder"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              Create / Edit Resume
+            </Link>
+            <Link
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-slate-900/15 bg-white px-5 text-sm font-semibold text-slate-900 hover:bg-slate-50"
+              href="/templates"
+            >
+              Browse Templates
+            </Link>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-slate-900/10 bg-white p-5">
+              <div className="text-sm font-semibold text-slate-900">Local-only</div>
+              <div className="mt-1 text-sm leading-6 text-slate-600">Your resumes live in your browser storage.</div>
+            </div>
+            <div className="rounded-2xl border border-slate-900/10 bg-white p-5">
+              <div className="text-sm font-semibold text-slate-900">Templates</div>
+              <div className="mt-1 text-sm leading-6 text-slate-600">Multiple professional layouts for different styles.</div>
+            </div>
+            <div className="rounded-2xl border border-slate-900/10 bg-white p-5">
+              <div className="text-sm font-semibold text-slate-900">One-click PDF</div>
+              <div className="mt-1 text-sm leading-6 text-slate-600">Download a clean, ATS-friendly PDF.</div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="text-xs text-slate-500">
+          Tip (macOS): In Safari, use Share {">"} Add to Dock to install as an app.
+        </footer>
       </main>
     </div>
   );
