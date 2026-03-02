@@ -44,7 +44,8 @@ function SectionTitle({ title, subtitle }: { title: string; subtitle?: string })
 export function BuilderClient() {
   const [resume, setResume] = useState<Resume | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "saving" | "error">("loading");
-  const [errorMsg, setErrorMsg] = useState<string>("");
+  const [aiBusy, setAiBusy] = useState<string>("");
+  const [roleTarget, setRoleTarget] = useState<string>("");
 
   const canDownload = useMemo(() => {
     if (!resume) return false;
@@ -77,7 +78,8 @@ export function BuilderClient() {
         setStatus("ready");
       } catch (e) {
         if (cancelled) return;
-        setErrorMsg(e instanceof Error ? e.message : "Failed to load resume");
+        const msg = e instanceof Error ? e.message : "Failed to load resume";
+        alert(msg);
         setStatus("error");
       }
     };
@@ -95,7 +97,8 @@ export function BuilderClient() {
       putResume({ ...resume, updatedAt: Date.now() })
         .then(() => setStatus("ready"))
         .catch((e) => {
-          setErrorMsg(e instanceof Error ? e.message : "Failed to save");
+          const msg = e instanceof Error ? e.message : "Failed to save";
+          alert(msg);
           setStatus("error");
         });
     },
@@ -166,7 +169,7 @@ export function BuilderClient() {
         <div className="mx-auto max-w-6xl px-6 py-10">
           <Card>
             <div className="text-sm font-semibold text-slate-900">Something went wrong</div>
-            <div className="mt-2 text-sm text-slate-600">{errorMsg || "Unknown error"}</div>
+            <div className="mt-2 text-sm text-slate-600">Try reloading. If this persists, check the console.</div>
             <div className="mt-4 flex gap-2">
               <Button onClick={() => window.location.reload()}>Reload</Button>
             </div>
@@ -255,6 +258,54 @@ export function BuilderClient() {
 
           <Card>
             <SectionTitle title="Summary" subtitle="2-4 lines highlighting your impact and strengths." />
+            <div className="mt-4 grid gap-2">
+              <Label>Target role (optional)</Label>
+              <Input value={roleTarget} onChange={(e) => setRoleTarget(e.target.value)} placeholder="e.g., Frontend Engineer" />
+              <div className="flex flex-wrap gap-2">
+                <SecondaryButton
+                  type="button"
+                  disabled={!!aiBusy}
+                  onClick={async () => {
+                    setAiBusy("summary");
+                    try {
+                      const skillsFlat = resume.skills.flatMap((g) => g.items.map((x) => x.trim()).filter(Boolean));
+                      const res = await fetch("/api/ai/summary", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          roleTarget,
+                          tone: "confident",
+                          basics: {
+                            firstName: resume.basics.firstName,
+                            lastName: resume.basics.lastName,
+                            headline: resume.basics.headline,
+                          },
+                          experience: resume.experience.map((e) => ({
+                            company: e.company,
+                            title: e.title,
+                            bullets: e.bullets,
+                          })),
+                          skills: skillsFlat,
+                        }),
+                      });
+                      const data = (await res.json()) as { text?: string; error?: string };
+                      if (!res.ok) throw new Error(data.error || "AI request failed");
+                      const text = (data.text || "").trim();
+                      if (text) update((r) => ({ ...r, summary: text }));
+                    } catch (e) {
+                      alert(e instanceof Error ? e.message : "AI request failed");
+                    } finally {
+                      setAiBusy("");
+                    }
+                  }}
+                >
+                  {aiBusy === "summary" ? "Generating..." : "Generate summary with AI"}
+                </SecondaryButton>
+                <div className="text-xs text-slate-500 self-center">
+                  Uses OpenAI; your input is sent to the API for generation.
+                </div>
+              </div>
+            </div>
             <div className="mt-5">
               <Textarea
                 value={resume.summary}
@@ -272,18 +323,21 @@ export function BuilderClient() {
 
             <div className="mt-5 grid gap-5">
               {resume.experience.map((exp, idx) => (
-                <ExperienceEditor
-                  key={exp.id}
-                  index={idx}
-                  value={exp}
-                  onChange={(next) =>
-                    update((r) => ({
-                      ...r,
-                      experience: r.experience.map((e) => (e.id === exp.id ? next : e)),
-                    }))
-                  }
-                  onRemove={() => removeExperience(exp.id)}
-                />
+            <ExperienceEditor
+              key={exp.id}
+              index={idx}
+              value={exp}
+              aiBusy={aiBusy}
+              roleTarget={roleTarget}
+              onAiBusy={setAiBusy}
+              onChange={(next) =>
+                update((r) => ({
+                  ...r,
+                  experience: r.experience.map((e) => (e.id === exp.id ? next : e)),
+                }))
+              }
+              onRemove={() => removeExperience(exp.id)}
+            />
               ))}
             </div>
           </Card>
@@ -403,11 +457,17 @@ function ExperienceEditor({
   value,
   onChange,
   onRemove,
+  aiBusy,
+  roleTarget,
+  onAiBusy,
 }: {
   index: number;
   value: ResumeExperience;
   onChange: (next: ResumeExperience) => void;
   onRemove: () => void;
+  aiBusy: string;
+  roleTarget: string;
+  onAiBusy: (v: string) => void;
 }) {
   const set = (patch: Partial<ResumeExperience>) => onChange({ ...value, ...patch });
   const setBullet = (i: number, text: string) => {
@@ -454,9 +514,44 @@ function ExperienceEditor({
       <div className="mt-4">
         <div className="flex items-center justify-between gap-3">
           <Label>Bullets</Label>
-          <SecondaryButton className="h-9" onClick={addBullet} type="button">
-            Add bullet
-          </SecondaryButton>
+          <div className="flex gap-2">
+            <SecondaryButton className="h-9" onClick={addBullet} type="button">
+              Add bullet
+            </SecondaryButton>
+            <SecondaryButton
+              className="h-9"
+              disabled={!!aiBusy}
+              onClick={async () => {
+                onAiBusy(`bullets:${value.id}`);
+                try {
+                  const res = await fetch("/api/ai/bullets", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      roleTarget,
+                      tone: "confident",
+                      title: value.title,
+                      company: value.company,
+                      bullets: value.bullets,
+                    }),
+                  });
+                  const data = (await res.json()) as { bullets?: string[]; error?: string };
+                  if (!res.ok) throw new Error(data.error || "AI request failed");
+                  if (Array.isArray(data.bullets) && data.bullets.length) {
+                    set({ bullets: data.bullets.map((x) => String(x)) });
+                  }
+                } catch (e) {
+                  alert(e instanceof Error ? e.message : "AI request failed");
+                } finally {
+                  onAiBusy("");
+                }
+              }}
+              type="button"
+              title="Rewrite bullets with AI"
+            >
+              {aiBusy === `bullets:${value.id}` ? "Rewriting..." : "AI rewrite"}
+            </SecondaryButton>
+          </div>
         </div>
         <div className="mt-2 grid gap-2">
           {value.bullets.map((b, i) => (

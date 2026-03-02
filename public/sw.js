@@ -23,9 +23,13 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
+  const url = new URL(req.url);
 
   // Only handle GET.
   if (req.method !== "GET") return;
+
+  // Never cache API calls.
+  if (url.pathname.startsWith("/api/")) return;
 
   // Navigation: network-first with cached fallback to app shell.
   if (req.mode === "navigate") {
